@@ -29,17 +29,36 @@ const publicUrlOrPath = getPublicUrlOrPath(
   process.env.PUBLIC_URL
 );
 
-const getWorkspacesSrc = (resolver, config) => {
+const getWorkspacesSrc = (resolveFn, config) => {
   if (!config || !Array.isArray(config.workspaces)) {
     return [];
   }
 
   return config.workspaces.map(entry => {
+    let path;
+
     if (Array.isArray(entry)) {
-      const [module, options] = entry;
-      return resolver(`../${module}/${options.root}`);
+      const [customEntry, options] = entry;
+
+      path = options.root
+        ? resolveFn(`../${customEntry}/${options.root}`)
+        : resolveFn(`../${customEntry}`);
+
+      if (!fs.existsSync(path)) {
+        throw Error(
+          'Unable to find workspace path for config : ' + customEntry
+        );
+      }
+      return path;
     }
-    return resolver(`../${entry}/src`);
+
+    path = resolveFn(`../${entry}/src`);
+
+    if (!fs.existsSync(path)) {
+      throw Error('Unable to find workspace path for config : ' + entry);
+    }
+
+    return path;
   });
 };
 
