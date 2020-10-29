@@ -400,7 +400,10 @@ module.exports = function (webpackEnv) {
             // The preset includes JSX, Flow, TypeScript, and some ESnext features.
             {
               test: /\.(js|mjs|jsx|ts|tsx)$/,
-              include: [paths.appSrc, ...paths.modulesSrc],
+              include:
+                paths.appWorkspaceModulesSrc.length > 0
+                  ? [paths.appSrc, ...paths.appWorkspaceModulesSrc]
+                  : paths.appSrc,
               loader: require.resolve('babel-loader'),
               options: {
                 customize: require.resolve(

@@ -29,8 +29,22 @@ const publicUrlOrPath = getPublicUrlOrPath(
   process.env.PUBLIC_URL
 );
 
-const workspaceModules =
-  require(resolveApp('package.json')).workspacesModules || [];
+const getWorkspacesSrc = (resolver, config) => {
+  if (!config || !Array.isArray(config.workspaces)) {
+    return [];
+  }
+
+  return config.workspaces.map(entry => {
+    if (Array.isArray(entry)) {
+      const [module, options] = entry;
+      return resolver(`../${module}/${options.root}`);
+    }
+    return resolver(`../${entry}/src`);
+  });
+};
+
+const resolveWorkspacesSrc = resolver =>
+  getWorkspacesSrc(resolver, require(resolveApp('workspaces.json')));
 
 const moduleFileExtensions = [
   'web.mjs',
@@ -69,13 +83,13 @@ module.exports = {
   appIndexJs: resolveModule(resolveApp, 'src/index'),
   appPackageJson: resolveApp('package.json'),
   appSrc: resolveApp('src'),
-  modulesSrc: workspaceModules.map(module => resolveApp(`../${module}/src`)),
   appTsConfig: resolveApp('tsconfig.json'),
   appJsConfig: resolveApp('jsconfig.json'),
   yarnLockFile: resolveApp('yarn.lock'),
   testsSetup: resolveModule(resolveApp, 'src/setupTests'),
   proxySetup: resolveApp('src/setupProxy.js'),
   appNodeModules: resolveApp('node_modules'),
+  appWorkspaceModulesSrc: resolveWorkspacesSrc(resolveApp),
   swSrc: resolveModule(resolveApp, 'src/service-worker'),
   publicUrlOrPath,
 };
@@ -93,13 +107,13 @@ module.exports = {
   appIndexJs: resolveModule(resolveApp, 'src/index'),
   appPackageJson: resolveApp('package.json'),
   appSrc: resolveApp('src'),
-  modulesSrc: workspaceModules.map(module => resolveApp(`../${module}/src`)),
   appTsConfig: resolveApp('tsconfig.json'),
   appJsConfig: resolveApp('jsconfig.json'),
   yarnLockFile: resolveApp('yarn.lock'),
   testsSetup: resolveModule(resolveApp, 'src/setupTests'),
   proxySetup: resolveApp('src/setupProxy.js'),
   appNodeModules: resolveApp('node_modules'),
+  appWorkspaceModulesSrc: resolveWorkspacesSrc(resolveApp),
   swSrc: resolveModule(resolveApp, 'src/service-worker'),
   publicUrlOrPath,
   // These properties only exist before ejecting:
@@ -130,7 +144,7 @@ if (
     appIndexJs: resolveModule(resolveOwn, `${templatePath}/src/index`),
     appPackageJson: resolveOwn('package.json'),
     appSrc: resolveOwn(`${templatePath}/src`),
-    modulesSrc: workspaceModules.map(module => resolveOwn(`../${module}/src`)),
+    appWorkspaceModulesSrc: resolveWorkspacesSrc(resolveOwn),
     appTsConfig: resolveOwn(`${templatePath}/tsconfig.json`),
     appJsConfig: resolveOwn(`${templatePath}/jsconfig.json`),
     yarnLockFile: resolveOwn(`${templatePath}/yarn.lock`),
